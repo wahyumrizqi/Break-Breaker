@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using System.IO;
 
 public class MainManager : MonoBehaviour
 {
@@ -11,10 +12,15 @@ public class MainManager : MonoBehaviour
     public Rigidbody Ball;
 
     public Text ScoreText;
+    public Text BestScore;
+    public Text playerName;
+    public Text gameOverText;
+
     public GameObject GameOverText;
     
     private bool m_Started = false;
     private int m_Points;
+    private int tempHighscore;
     
     private bool m_GameOver = false;
 
@@ -36,6 +42,11 @@ public class MainManager : MonoBehaviour
                 brick.onDestroyed.AddListener(AddPoint);
             }
         }
+
+        //BestScore.text = "Best Score: " + GameManager.Instance.playerName.text;
+        playerName.text = GameManager.Instance.playerName.text;
+        LoadHighscore();
+
     }
 
     private void Update()
@@ -72,5 +83,39 @@ public class MainManager : MonoBehaviour
     {
         m_GameOver = true;
         GameOverText.SetActive(true);
+        if(m_Points> tempHighscore)
+        {
+            SaveHighscore();
+            LoadHighscore();
+        }
     }
+
+    public void SaveHighscore()
+    {
+        SaveData data = new SaveData();
+        data.playerNameHighscore = GameManager.Instance.playerName.text;
+        
+        data.highscore = m_Points;
+        string json = JsonUtility.ToJson(data);
+        File.WriteAllText(Application.persistentDataPath + "/highscore.json", json);
+    }
+
+    public void LoadHighscore()
+    {
+        string path = Application.persistentDataPath + "/highscore.json";
+        if (File.Exists(path))
+        {
+            string json = File.ReadAllText(path);
+            SaveData data = JsonUtility.FromJson<SaveData>(json);
+            BestScore.text = "Best Score: " + data.playerNameHighscore + " : " + data.highscore;
+            tempHighscore = data.highscore;
+        }
+    }
+}
+
+[System.Serializable]
+class SaveData
+{
+    public string playerNameHighscore;
+    public int highscore;
 }
